@@ -1,0 +1,26 @@
+name: Sincronizar Smartsheet cada hora
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Obtener datos de Smartsheet
+        run: |
+          curl -s -H "Authorization: Bearer 4X3rzdLllABWmmhrKYzsBmrLTUrciOzsgtYfN" \
+            "https://api.smartsheet.com/2.0/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1" \
+            > data.json
+
+      - name: Commit y Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data.json
+          git commit -m "chore: sync Smartsheet data" || true
+          git push
