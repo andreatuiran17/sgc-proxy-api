@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>JAMAR · SGC Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+:root{
+  --b1:#0F2340;--b2:#1A3D6E;--b3:#2563A8;--b4:#4A90D9;--b5:#E8F3FD;
+  --f1c:#0D6B5E;--f1l:#CCFBF1;--f1b:#F0FDFB;
+  --f2c:#6D28D9;--f2l:#EDE9FE;--f2b:#F5F3FF;
+  --f3c:#0369A1;--f3l:#DBEAFE;--f3b:#EFF6FF;
+  --gr:#059669;--grl:#ECFDF5;--grd:#065F46;
+  --am:#D97706;--aml:#FFFBEB;--amd:#92400E;
+  --rd:#DC2626;--rdl:#FEF2F2;--rdd:#991B1B;
+  --tx:#111827;--tx2:#374151;--tx3:#6B7280;
+  --bd:rgba(0,0,0,0.08);--bds:rgba(0,0,0,0.04);--bg:#ffffff
+}
+.db{background:linear-gradient(145deg,#EBF3FD,#F4F7FB 50%,#EFF6FF);padding:12px;border-radius:12px;min-height:400px}
+.card{background:var(--bg);border-radius:10px;border:.5px solid var(--bd);box-shadow:0 2px 8px rgba(0,0,0,.07);padding:10px 12px}
+.card-f1{border-top:3px solid var(--f1c);background:linear-gradient(160deg,var(--f1b),var(--bg) 60%)}
+.card-f2{border-top:3px solid var(--f2c);background:linear-gradient(160deg,var(--f2b),var(--bg) 60%)}
+.card-f3{border-top:3px solid var(--f3c);background:linear-gradient(160deg,var(--f3b),var(--bg) 60%)}
+.card-kpi{border-top:3px solid var(--b3)}.card-kpi.ok{border-top-color:var(--gr)}.card-kpi.warn{border-top-color:var(--am)}.card-kpi.crit{border-top-color:var(--rd)}
+.hdr{background:var(--b1);border-radius:10px;padding:8px 14px;display:flex;align-items:center;gap:8px;margin-bottom:10px;box-shadow:0 4px 16px rgba(0,0,0,.25);flex-wrap:wrap}
+.hdr-logo{color:#fff;font-size:16px;font-weight:500;letter-spacing:2px;padding-right:10px;border-right:1px solid rgba(255,255,255,.15)}
+.hdr-bv{display:flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(255,255,255,.08);border-radius:6px;font-size:9px;color:#9BB5D4}
+.bv-sq{width:14px;height:14px;border-radius:2px;background:#003B7A;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff}
+.hdr-title{color:#9BB5D4;font-size:11px;flex:1}
+.nav-btn{background:rgba(255,255,255,.1);color:#CBD8EC;font-size:10px;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;transition:all .15s}
+.nav-btn.active,.nav-btn:hover{background:#2563A8;color:#fff}
+.hdr-link{background:#2563A8;color:#fff;font-size:10px;padding:3px 9px;border-radius:5px;text-decoration:none;display:flex;align-items:center;gap:4px;border:none;cursor:pointer;flex-shrink:0}
+#token-banner{background:linear-gradient(135deg,#0F2340,#1A3D6E);border-radius:10px;padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+#token-banner.hidden{display:none}
+.tb-icon{font-size:28px;color:#4A90D9;flex-shrink:0}
+.tb-content{flex:1}
+.tb-title{color:#fff;font-size:13px;font-weight:600;margin-bottom:4px}
+.tb-sub{color:#9BB5D4;font-size:11px;margin-bottom:10px}
+.tb-row{display:flex;gap:8px;align-items:center}
+.tb-input{flex:1;background:rgba(255,255,255,.08);border:.5px solid rgba(255,255,255,.2);border-radius:6px;padding:7px 12px;color:#fff;font-size:12px;font-family:monospace;outline:none}
+.tb-input:focus{border-color:#4A90D9}.tb-input::placeholder{color:rgba(255,255,255,.3)}
+.tb-btn{background:#2563A8;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:12px;cursor:pointer}
+.tb-note{color:#6B8AAD;font-size:10px;margin-top:6px;display:flex;align-items:center;gap:4px}
+#status-bar{display:none;align-items:center;gap:8px;background:rgba(255,255,255,.9);border-radius:7px;border:.5px solid var(--bd);padding:5px 12px;margin-bottom:10px;font-size:11px}
+#status-bar.show{display:flex}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sdot.loading{background:var(--am);animation:pulse 1s infinite}.sdot.ok{background:var(--gr)}.sdot.err{background:var(--rd)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#btn-refresh{background:none;border:.5px solid var(--bd);border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--tx3);display:flex;align-items:center;gap:4px}
+#btn-logout{background:none;border:.5px solid rgba(220,38,38,.3);border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--rd)}
+.filters{background:rgba(255,255,255,.9);border-radius:7px;border:.5px solid var(--bd);padding:5px 10px;display:flex;align-items:center;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:nowrap}
+.filters select{font-size:11px;padding:2px 5px;border-radius:4px;border:.5px solid var(--bd);background:var(--bg);color:var(--tx);height:24px;min-width:90px;max-width:150px}
+.fsep{width:.5px;height:18px;background:var(--bd);flex-shrink:0}
+.fl{font-size:10px;color:var(--tx3);white-space:nowrap}
+.tl-card{background:var(--bg);border-radius:10px;border:.5px solid var(--bd);box-shadow:0 2px 8px rgba(0,0,0,.07);padding:10px 14px;margin-bottom:10px}
+.tl-inner{position:relative;height:72px;margin-top:4px}
+.tl-bg{position:absolute;top:38px;left:0;right:0;height:5px;background:var(--bds);border-radius:3px}
+.tl-tgt{position:absolute;top:38px;left:0;height:5px;border-radius:3px;background:rgba(217,119,6,.2);border:.5px solid rgba(217,119,6,.4)}
+.tl-real{position:absolute;top:38px;left:0;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--gr),var(--b3));transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.tl-mw{position:absolute;top:0;left:0;right:0;height:72px}
+.tl-m{position:absolute;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)}
+.tl-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--bd);background:var(--bg);margin-bottom:3px;margin-top:28px}
+.tl-dot.audit{background:var(--rd);border-color:var(--rd)}
+.tl-lbl{font-size:8.5px;margin-top:3px;white-space:nowrap;color:var(--tx3)}
+.tl-lbl.audit{color:var(--rd);font-weight:500}
+.pl-real{position:absolute;top:20px;transition:left 1.2s cubic-bezier(.4,0,.2,1);transform:translateX(-50%);font-size:16px;color:var(--b3)}
+.main-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.mid-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
+.bot-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);gap:8px}
+.ctitle{font-size:10px;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.kv{font-size:24px;font-weight:500;line-height:1;color:var(--tx)}
+.kl{font-size:9px;color:var(--tx3);margin-top:3px}
+.ks{font-size:9px;margin-top:3px;display:flex;align-items:center;gap:3px}
+.sem{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block}
+.sem.ok{background:var(--gr)}.sem.warn{background:var(--am)}.sem.crit{background:var(--rd)}
+.badge{display:inline-block;padding:1px 6px;border-radius:9px;font-size:9px;font-weight:500;white-space:nowrap}
+.bok{background:var(--grl);color:var(--grd)}.bwarn{background:var(--aml);color:var(--amd)}.bcrit{background:var(--rdl);color:var(--rdd)}.binfo{background:var(--b5);color:var(--b2)}
+.pbar{flex:1;height:5px;border-radius:3px;background:var(--bds);overflow:hidden;border:.5px solid var(--bd)}
+.pbar-f{height:100%;border-radius:3px;transition:width .8s ease}
+.frow{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:.5px solid var(--bd);font-size:10.5px}
+.frow:last-child{border-bottom:none}
+.ficon{display:inline-flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0}
+.fi1{background:var(--f1l);color:var(--f1c)}.fi2{background:var(--f2l);color:var(--f2c)}.fi3{background:var(--f3l);color:var(--f3c)}
+.ava{width:22px;height:22px;border-radius:50%;background:var(--b5);color:var(--b2);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;flex-shrink:0}
+.comp-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:.5px solid var(--bd);font-size:10px}
+.comp-row:last-child{border-bottom:none}
+.act-hdr{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1fr);gap:4px;padding-bottom:4px;border-bottom:.5px solid var(--bd);font-size:9px;color:var(--tx3);font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.arow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1fr);gap:4px;align-items:start;padding:5px 2px;border-bottom:.5px solid var(--bd);font-size:10px}
+.arow:last-child{border-bottom:none}
+.arow.venc{background:rgba(220,38,38,.04)}.arow.prox{background:rgba(217,119,6,.04)}
+.tab-view{display:none}.tab-view.active{display:block}
+.cron-card{background:var(--bg);border-radius:10px;border:.5px solid var(--bd);box-shadow:0 2px 8px rgba(0,0,0,.07);padding:12px}
+.cron-hdr{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,1fr) 70px 70px 66px;gap:6px;padding-bottom:5px;border-bottom:.5px solid var(--bd);margin-bottom:2px;font-size:9px;color:var(--tx3);font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.crow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) minmax(0,1fr) 70px 70px 66px;gap:6px;align-items:start;padding:5px 4px;border-bottom:.5px solid var(--bd);font-size:10px}
+.crow:last-child{border-bottom:none}
+.crow.venc{background:rgba(220,38,38,.04);border-radius:4px}.crow.prox{background:rgba(217,119,6,.04);border-radius:4px}.crow.done{background:rgba(5,150,105,.03);border-radius:4px}
+.empty-state{text-align:center;padding:24px;color:var(--tx3);font-size:12px}
+.sk{background:linear-gradient(90deg,var(--bds) 25%,rgba(0,0,0,.07) 50%,var(--bds) 75%);background-size:200% 100%;animation:sh 1.5s infinite;border-radius:4px;height:13px;margin:5px 0}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes progress{0%{width:0}50%{width:100%}100%{width:0}}
+</style>
+</head>
+<body>
+<div class="db">
+
+<div class="hdr">
+  <span class="hdr-logo">JAMAR</span>
+  <div class="hdr-bv"><div class="bv-sq">BV</div><span>Bureau Veritas · ISO 9001</span></div>
+  <span class="hdr-title" style="margin-left:4px"><i class="fa-solid fa-shield-halved" style="font-size:11px"></i> Centro de Control SGC</span>
+  <button class="nav-btn active" onclick="switchView('dash',this)">Dashboard</button>
+  <button class="nav-btn" onclick="switchView('cron',this)">Cronograma</button>
+  <a class="hdr-link" href="https://app.smartsheet.com/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1?view=gantt" target="_blank">
+    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px"></i> Smartsheet
+  </a>
+</div>
+
+<div id="token-banner" style="display:none">
+  <div class="tb-icon"><i class="fa-solid fa-sync"></i></div>
+  <div class="tb-content">
+    <div class="tb-title">Sincronización en progreso...</div>
+    <div class="tb-sub" id="sync-message">Actualizando datos desde Smartsheet...</div>
+    <div style="margin-top:8px;height:3px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden">
+      <div style="height:100%;background:#4A90D9;animation:progress 1.5s infinite;border-radius:2px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="status-bar">
+  <span class="sdot" id="sdot"></span>
+  <span id="stxt" style="flex:1"></span>
+  <span id="sync-time" style="font-size:9px;color:var(--tx3);margin-right:8px">Última sincronización: —</span>
+  <button id="btn-sync-now" onclick="syncNow()" style="background:var(--b3);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-sync" style="font-size:9px"></i> Sincronizar</button>
+</div>
+
+<!-- FILTROS ÚNICOS COMPARTIDOS -->
+<div class="filters">
+  <i class="fa-solid fa-sliders" style="font-size:12px;color:var(--tx3)"></i>
+  <span class="fl">Frente:</span>
+  <select id="f-frente" onchange="onFilter()">
+    <option value="todos">Todos</option>
+    <option value="f1">Industria & Logística</option>
+    <option value="f2">CMO & Producto</option>
+    <option value="f3">Nonbank & Corporativo</option>
+  </select>
+  <div class="fsep"></div>
+  <span class="fl">Componente:</span>
+  <select id="f-comp" onchange="onFilter()"><option value="todos">Todos</option></select>
+  <div class="fsep"></div>
+  <span class="fl">Resp:</span>
+  <select id="f-resp" onchange="onFilter()"><option value="todos">Todos</option></select>
+  <div class="fsep"></div>
+  <span class="fl">Estado:</span>
+  <select id="f-estado" onchange="onFilter()">
+    <option value="todos">Todos</option>
+    <option value="Completada">Completada</option>
+    <option value="En proceso">En proceso</option>
+    <option value="Por vencer">Por vencer</option>
+    <option value="Vencida">Vencida</option>
+  </select>
+</div>
+
+<!-- DASHBOARD -->
+<div id="view-dash" class="tab-view active">
+  <div class="tl-card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+      <i class="fa-solid fa-route" style="font-size:12px;color:var(--b4)"></i>
+      <span style="font-size:10px;font-weight:500;color:var(--tx2)">Ruta de certificación ISO 9001:2015 — Jun 2026 → May 2027</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--am);font-weight:500;display:flex;align-items:center;gap:4px">
+        <span class="sem warn"></span><span id="tl-lbl">Avance: — · Meta: 25%</span>
+      </span>
+      <span style="font-size:9px;color:var(--rd);display:flex;align-items:center;gap:3px">
+        <i class="fa-solid fa-flag" style="font-size:10px"></i>Auditoría May 27
+      </span>
+    </div>
+    <div class="tl-inner">
+      <div class="tl-bg"></div><div class="tl-tgt" style="width:25%"></div>
+      <div class="tl-real" id="tl-real" style="width:0"></div>
+      <div class="tl-mw" id="tl-mw"></div>
+      <div class="pl-real" id="pl-real"><i class="fa-solid fa-plane" style="transform:rotate(90deg)"></i></div>
+    </div>
+    <div style="display:flex;gap:14px;font-size:9px;color:var(--tx3);margin-top:4px">
+      <span style="display:flex;align-items:center;gap:3px"><span style="width:16px;height:3px;background:linear-gradient(90deg,var(--gr),var(--b3));border-radius:2px;display:inline-block"></span>Avance real</span>
+      <span style="display:flex;align-items:center;gap:3px"><span style="width:16px;height:3px;background:rgba(217,119,6,.3);border-radius:2px;display:inline-block"></span>Meta planificada</span>
+      <span style="display:flex;align-items:center;gap:3px;color:var(--rd)"><span style="width:8px;height:8px;border-radius:50%;background:var(--rd);display:inline-block"></span>Auditoría</span>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="card card-kpi" id="kpi-card">
+      <div class="kv" id="kv-global">—</div><div class="kl">Cumplimiento global</div>
+      <div class="ks"><span class="sem" id="sem-g"></span><span id="lbl-g" style="color:var(--tx3)">Cargando…</span></div>
+    </div>
+    <div class="card card-kpi crit">
+      <div class="kv" style="color:var(--rd)" id="kv-venc">—</div><div class="kl">Actividades vencidas</div>
+      <div class="ks"><span class="sem crit"></span><span style="color:var(--tx3)">Acción requerida</span></div>
+    </div>
+    <div class="card card-kpi warn">
+      <div class="kv" style="color:var(--am)" id="kv-prox">—</div><div class="kl">Por vencer &lt;15 días</div>
+      <div class="ks"><span class="sem warn"></span><span style="color:var(--tx3)">Monitorear</span></div>
+    </div>
+    <div class="card card-kpi ok">
+      <div class="kv" style="color:var(--gr)" id="kv-comp">—</div><div class="kl">Completadas (Hecho)</div>
+      <div class="ks"><span class="sem ok"></span><span id="lbl-comp" style="color:var(--tx3)">— del plan</span></div>
+    </div>
+  </div>
+
+  <div class="mid-grid">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card card-f1" id="card-f1">
+        <div style="font-size:10px;font-weight:500;color:var(--f1c);margin-bottom:4px;display:flex;align-items:center;gap:4px">
+          <span class="ficon fi1" style="width:20px;height:20px;font-size:11px"><i class="fa-solid fa-truck"></i></span>Industria & Logística
+        </div>
+        <div style="font-size:20px;font-weight:500" id="f1-pct">—</div>
+        <span class="badge" id="f1-badge">—</span>
+        <div style="margin-top:6px"><div class="pbar"><div class="pbar-f" id="f1-bar" style="width:0"></div></div></div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:4px" id="f1-sub">—</div>
+      </div>
+      <div class="card card-f2" id="card-f2">
+        <div style="font-size:10px;font-weight:500;color:var(--f2c);margin-bottom:4px;display:flex;align-items:center;gap:4px">
+          <span class="ficon fi2" style="width:20px;height:20px;font-size:11px"><i class="fa-solid fa-couch"></i></span>CMO & Producto
+        </div>
+        <div style="font-size:20px;font-weight:500" id="f2-pct">—</div>
+        <span class="badge" id="f2-badge">—</span>
+        <div style="margin-top:6px"><div class="pbar"><div class="pbar-f" id="f2-bar" style="width:0"></div></div></div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:4px" id="f2-sub">—</div>
+      </div>
+      <div class="card card-f3" id="card-f3">
+        <div style="font-size:10px;font-weight:500;color:var(--f3c);margin-bottom:4px;display:flex;align-items:center;gap:4px">
+          <span class="ficon fi3" style="width:20px;height:20px;font-size:11px"><i class="fa-solid fa-credit-card"></i></span>Nonbank & Corporativo
+        </div>
+        <div style="font-size:20px;font-weight:500" id="f3-pct">—</div>
+        <span class="badge" id="f3-badge">—</span>
+        <div style="margin-top:6px"><div class="pbar"><div class="pbar-f" id="f3-bar" style="width:0"></div></div></div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:4px" id="f3-sub">—</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card">
+        <div class="ctitle"><i class="fa-solid fa-gauge-high" style="color:var(--b4)"></i> Estado SGC</div>
+        <div style="display:flex;align-items:center;gap:12px;justify-content:center">
+          <div style="position:relative;width:130px;height:80px;flex-shrink:0">
+            <canvas id="cGauge" width="130" height="80"></canvas>
+            <div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none">
+              <div style="font-size:18px;font-weight:500;color:var(--tx);line-height:1" id="gauge-val">—</div>
+              <div style="font-size:8px;color:var(--tx3)">global</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;font-size:9px">
+            <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;border-radius:2px;background:var(--rd);display:inline-block"></span>Crítico &lt;80%</div>
+            <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;border-radius:2px;background:var(--am);display:inline-block"></span>Seguim. 80–94%</div>
+            <div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;border-radius:2px;background:var(--gr);display:inline-block"></span>Óptimo ≥95%</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><i class="fa-solid fa-chart-bar" style="color:var(--b4)"></i> Distribución</div>
+        <div id="dist-box"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><i class="fa-solid fa-bell" style="color:var(--rd)"></i> Alertas ejecutivas</div>
+        <div id="alerts-box"><div class="sk" style="width:90%"></div><div class="sk" style="width:70%"></div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="card">
+        <div class="ctitle"><i class="fa-solid fa-layer-group" style="color:var(--b4)"></i> Componentes <span id="comp-lbl" style="font-weight:400;color:var(--tx3);font-size:9px"></span></div>
+        <div id="comps-box"><div class="sk"></div><div class="sk" style="width:80%"></div><div class="sk" style="width:70%"></div></div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><i class="fa-solid fa-users" style="color:var(--b4)"></i> Responsables</div>
+        <div id="resps-box"><div class="sk"></div><div class="sk" style="width:75%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bot-grid">
+    <div class="card">
+      <div class="ctitle"><i class="fa-solid fa-triangle-exclamation" style="color:var(--rd)"></i> Actividades urgentes
+        <span style="margin-left:auto;display:flex;gap:8px;font-size:9px;color:var(--tx3);align-items:center">
+          <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:3px;background:var(--rd);opacity:.5;border-radius:1px;display:inline-block"></span>Vencida</span>
+          <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:3px;background:var(--am);opacity:.5;border-radius:1px;display:inline-block"></span>Por vencer</span>
+          <button id="btn-export-excel" onclick="exportVencidosExcel()" style="background:var(--gr);color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:9px;cursor:pointer;margin-left:auto"><i class="fa-solid fa-download" style="font-size:8px"></i> Descargar</button>
+        </span>
+      </div>
+      <div class="act-hdr"><span>Componente</span><span>Subnivel</span><span>Responsable</span><span>Fecha fin</span></div>
+      <div id="acts-box"><div class="sk"></div><div class="sk" style="width:85%"></div></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><i class="fa-solid fa-star" style="color:var(--am)"></i> Top prioridades</div>
+      <div id="prios-box"><div class="sk"></div><div class="sk" style="width:80%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CRONOGRAMA -->
+<div id="view-cron" class="tab-view">
+  <div class="cron-card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <i class="fa-solid fa-calendar-days" style="font-size:13px;color:var(--b4)"></i>
+      <span style="font-size:12px;font-weight:500;color:var(--tx2)">Cronograma — Jun 2026 → May 2027</span>
+      <a class="hdr-link" style="margin-left:auto" href="https://app.smartsheet.com/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1?view=gantt" target="_blank">
+        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px"></i> Ver Gantt
+      </a>
+    </div>
+    <div class="cron-hdr"><span>Componente › Actividad</span><span>Proceso/Mes</span><span>Responsable</span><span>Inicio</span><span>Fin</span><span>Estado</span></div>
+    <div id="cron-body"><div class="sk"></div><div class="sk" style="width:90%"></div></div>
+  </div>
+</div>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+<script>
+const SHEET_ID = '24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1';
+const API_DATA = '/api/data';
+const API_SYNC = '/api/sync-now';
+const FI_CLS   = {f1:'fi1',f2:'fi2',f3:'fi3'};
+const FI_ICON  = {f1:'fa-truck',f2:'fa-couch',f3:'fa-credit-card'};
+const FI_NAME  = {f1:'Industria & Logística',f2:'CMO & Producto',f3:'Nonbank & Corporativo'};
+
+let lastSyncTime = null;
+let ROOT_PCT=0; // % de la raíz (PLAN DE TRABAJO) de Smartsheet
+
+// Estructura procesada de Smartsheet
+// FRENTES: {f1,f2,f3} → {id, nombre, pct, componentes:[{id,nombre,pct,fk,hojas:[...]}]}
+// HOJAS: filas sin hijos → {id,nombre,fk,componenteId,componenteNombre,procesoNombre,resp,ini,fin,estadoRaw,pct}
+let FRENTES={}, COMPONENTES=[], HOJAS=[], COLS={}, ROW_MAP={}, FRENTE_ID_MAP={};
+
+// ── TIMELINE ─────────────────────────────────────────────────────────────────
+const MTHS=['Jun 26','Jul','Ago','Sep','Oct','Nov','Dic','Ene 27','Feb','Mar','Abr','May 27'];
+(()=>{
+  const w=el('tl-mw');
+  MTHS.forEach((m,i)=>{
+    const p=i/(MTHS.length-1),isA=i===MTHS.length-1;
+    const d=document.createElement('div');
+    d.className='tl-m';d.style.left=Math.round(p*100)+'%';
+    d.innerHTML=`<div class="tl-dot${isA?' audit':''}"></div><div class="tl-lbl${isA?' audit':''}">${m}${isA?' 🔒':''}</div>`;
+    w.appendChild(d);
+  });
+})();
+function setTimeline(pct){
+  el('tl-real').style.width=pct+'%';
+  el('pl-real').style.left=pct+'%';
+  el('tl-lbl').textContent=`Avance: ${pct}% · Meta: 25%`;
+}
+
+// ── GAUGE ─────────────────────────────────────────────────────────────────────
+function drawGauge(v){
+  const ctx=document.getElementById('cGauge').getContext('2d');
+  ctx.clearRect(0,0,130,80);
+  [[0,.8,'#DC2626'],[.8,.95,'#D97706'],[.95,1,'#059669']].forEach(([a,b,c])=>{
+    ctx.beginPath();ctx.arc(65,72,52,Math.PI+Math.PI*a,Math.PI+Math.PI*b);
+    ctx.strokeStyle=c;ctx.lineWidth=12;ctx.lineCap='butt';ctx.stroke();
+  });
+  const na=Math.PI+Math.PI*Math.min(Math.max(v/100,0),1);
+  ctx.beginPath();ctx.moveTo(65,72);ctx.lineTo(65+Math.cos(na)*44,72+Math.sin(na)*44);
+  ctx.strokeStyle='#1B2E4B';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.arc(65,72,5,0,Math.PI*2);ctx.fillStyle='#1B2E4B';ctx.fill();
+  el('gauge-val').textContent=v+'%';
+}
+
+// ── AUTH & SYNC ───────────────────────────────────────────────────────────────
+function setStatus(s,m){
+  el('status-bar').classList.add('show');
+  el('sdot').className='sdot '+s;
+  el('stxt').textContent=m;
+}
+
+function updateSyncTime(){
+  if(lastSyncTime){
+    const d=new Date(lastSyncTime);
+    const hm=d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    el('sync-time').textContent='Última sincronización: '+hm;
+  }
+}
+
+async function syncNow(){
+  const btn=el('btn-sync-now');
+  btn.disabled=true;
+  setStatus('loading','Sincronizando con Smartsheet…');
+  try{
+    const resp=await fetch(API_SYNC,{method:'POST'});
+    const res=await resp.json();
+    if(res.success){
+      lastSyncTime=res.data.syncedAt;
+      updateSyncTime();
+      setStatus('ok','Sincronización exitosa • '+res.data.totalRows+' actividades');
+      load();
+    }else{
+      setStatus('err','Error en sincronización: '+res.error);
+    }
+  }catch(e){
+    setStatus('err','Error: '+e.message);
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function load(){
+  setStatus('loading','Cargando datos desde Redis…');
+  try{
+    // Limpiar datos antiguos antes de recargar
+    FRENTES={};COMPONENTES=[];HOJAS=[];COLS={};ROW_MAP={};FRENTE_ID_MAP={};ROOT_PCT=0;
+
+    const resp=await fetch(API_DATA);
+    const result=await resp.json();
+
+    if(!result.success){
+      throw new Error(result.error||'No hay datos disponibles');
+    }
+
+    const d=result.data;
+    lastSyncTime=d.syncedAt;
+    updateSyncTime();
+
+    // Los datos de Redis ya vienen en formato Smartsheet con estructura jerárquica
+    parse(d);
+    setStatus('ok',`Datos cargados: ${new Date().toLocaleTimeString('es-CO')} · ${HOJAS.length} actividades`);
+    renderAll();
+  }catch(e){setStatus('err','Error: '+e.message);}
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function nm(s){return(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
+
+function parsePct(raw){
+  if(raw===null||raw===undefined||raw==='')return 0;
+  const s=raw.toString().trim();
+  const v=parseFloat(s.replace('%',''));
+  if(isNaN(v))return 0;
+  // Si viene 0-1 sin símbolo % → es decimal → ×100
+  return(v>0&&v<=1&&!s.includes('%'))?Math.round(v*100):Math.round(v);
+}
+
+function cv(row,colTitle){
+  const id=COLS[colTitle];if(!id)return'';
+  const cell=row.cells.find(c=>c.columnId===id);
+  return cell?(cell.displayValue??cell.value??''):'';
+}
+
+// ── PARSER PRINCIPAL ──────────────────────────────────────────────────────────
+// Estrategia: leer el árbol jerárquico completo y mapear cada nivel
+// IMPORTANTE: Traer % directamente de Smartsheet SIN RECALCULAR
+// Nivel 0: raíz (PLAN DE TRABAJO)
+// Nivel 1: FRENTES (PROCESOS INDUSTRIA & LOGÍSTICA, PROCESOS CMO & PRODUCTO, PROCESOS NONBANK & CORPORATIVO)
+// Nivel 2: COMPONENTES (hijos directos de cada frente)
+// Nivel 3+: HOJAS (actividades sin hijos — pueden ser procesos o meses)
+function parse(data){
+  COLS={};
+  data.columns.forEach(c=>{COLS[c.title]=c.id;});
+  const PCT_COL=Object.keys(COLS).find(k=>k.startsWith('%'))||'';
+
+  ROW_MAP={};
+  data.rows.forEach(r=>{ROW_MAP[r.id]=r;});
+
+  // Set de IDs que tienen hijos
+  const hasChildSet=new Set(data.rows.map(r=>r.parentId).filter(Boolean));
+
+  // 1. Buscar la raíz (PLAN DE TRABAJO) y guardar su %
+  ROOT_PCT=0;
+  data.rows.forEach(r=>{
+    const n=cv(r,'Nombre de la tarea');
+    if(n.includes('PLAN DE TRABAJO')||n.includes('Plan de Trabajo')){
+      const rawPct=r.cells.find(c=>c.columnId===COLS[PCT_COL]);
+      ROOT_PCT=parsePct(rawPct?.value??rawPct?.displayValue??0);
+    }
+  });
+
+  // 2. Identificar frentes por nombre EXACTO (nivel 1)
+  FRENTE_ID_MAP={};
+  data.rows.forEach(r=>{
+    const n=cv(r,'Nombre de la tarea');
+    if(n.includes('PROCESOS INDUSTRIA & LOGÍSTICA')) FRENTE_ID_MAP[r.id]='f1';
+    else if(n.includes('PROCESOS CMO & PRODUCTO'))   FRENTE_ID_MAP[r.id]='f2';
+    else if(n.includes('PROCESOS NONBANK & CORPORATIVO')) FRENTE_ID_MAP[r.id]='f3';
+  });
+
+  // 3. Construir FRENTES con su % DIRECTO de Smartsheet (NO recalcular)
+  FRENTES={f1:null,f2:null,f3:null};
+  Object.entries(FRENTE_ID_MAP).forEach(([id,fk])=>{
+    const r=ROW_MAP[id];
+    if(!r)return;
+    const rawPct=r.cells.find(c=>c.columnId===COLS[PCT_COL]);
+    const pct=parsePct(rawPct?.value??rawPct?.displayValue??0);
+    FRENTES[fk]={id,nombre:cv(r,'Nombre de la tarea'),pct,fk};
+  });
+
+  // 3. Identificar COMPONENTES: hijos directos de cada frente (pueden tener hijos o no)
+  COMPONENTES=[];
+  data.rows.forEach(r=>{
+    if(!r.parentId)return;
+    const fk=FRENTE_ID_MAP[r.parentId]; // padre es un frente → este es componente
+    if(!fk)return;
+    // Incluir componentes tanto si tienen hijos como si no (algunos son directamente tareas)
+    const rawPct=r.cells.find(c=>c.columnId===COLS[PCT_COL]);
+    const pct=parsePct(rawPct?.value??rawPct?.displayValue??0);
+    COMPONENTES.push({id:r.id,nombre:cv(r,'Nombre de la tarea'),pct,fk,hasChildren:hasChildSet.has(r.id)});
+  });
+
+  // Mapa componenteId → {nombre, pct, fk}
+  const COMP_MAP={};
+  COMPONENTES.forEach(c=>{COMP_MAP[c.id]=c;});
+
+  // 4. Función: dado una hoja, encontrar su componenteId y procesoNombre subiendo
+  function getCompAndProceso(row){
+    let cur=row;
+    let procesoNombre='';
+    for(let i=0;i<15;i++){
+      if(!cur.parentId)break;
+      const parent=ROW_MAP[cur.parentId];
+      if(!parent||parent.id===cur.id)break;
+      // Si el padre es un componente conocido → cur es proceso (o hoja directa del componente)
+      if(COMP_MAP[parent.id]){
+        return{componenteId:parent.id,componenteNombre:COMP_MAP[parent.id].nombre,procesoNombre};
+      }
+      // Si el padre es un frente → no hay componente (hoja directa del frente)
+      if(FRENTE_ID_MAP[parent.id]){
+        return{componenteId:null,componenteNombre:'',procesoNombre:''};
+      }
+      // Seguir subiendo — guardar el nombre como proceso
+      if(!procesoNombre)procesoNombre=cv(parent,'Nombre de la tarea');
+      cur=parent;
+    }
+    return{componenteId:null,componenteNombre:'',procesoNombre};
+  }
+
+  // Función: obtener frente de una hoja subiendo
+  function getFrenteHoja(row){
+    let cur=row;
+    for(let i=0;i<15;i++){
+      if(FRENTE_ID_MAP[cur.id])return FRENTE_ID_MAP[cur.id];
+      if(!cur.parentId)break;
+      const p=ROW_MAP[cur.parentId];if(!p||p.id===cur.id)break;
+      cur=p;
+    }
+    return null;
+  }
+
+  // 5. Construir HOJAS: filas sin hijos que pertenezcan a un frente (excluir componentes)
+  HOJAS=data.rows.filter(r=>{
+    if(hasChildSet.has(r.id))return false; // tiene hijos → no es hoja final
+    if(FRENTE_ID_MAP[r.id])return false;   // es un frente → excluir
+    if(COMP_MAP[r.id])return false;        // es un componente → excluir
+    const nombre=cv(r,'Nombre de la tarea');
+    if(!nombre)return false;
+    return getFrenteHoja(r)!==null;        // debe pertenecer a un frente
+  }).map(r=>{
+    const fk=getFrenteHoja(r);
+    const{componenteId,componenteNombre,procesoNombre}=getCompAndProceso(r);
+    const rawPct=r.cells.find(c=>c.columnId===COLS[PCT_COL]);
+    const pct=parsePct(rawPct?.value??rawPct?.displayValue??0);
+    const estadoRaw=cv(r,'Estado');
+    return{
+      id:r.id,
+      nombre:cv(r,'Nombre de la tarea'),
+      fk,
+      componenteId,
+      componenteNombre,
+      procesoNombre,
+      resp:cv(r,'Responsable'),
+      ini:cv(r,'Mes Inicio'),
+      fin:cv(r,'Mes Fin'),
+      estadoRaw,
+      pct
+    };
+  });
+
+  buildFilters();
+}
+
+// ── ESTADO de hoja ────────────────────────────────────────────────────────────
+function calcEst(r){
+  if(nm(r.estadoRaw)==='hecho'||r.pct>=100)return'Completada';
+  if(r.fin){
+    const fin=new Date(r.fin),hoy=new Date();hoy.setHours(0,0,0,0);
+    const d=(fin-hoy)/864e5;
+    if(!isNaN(d)){
+      if(d<0&&r.pct<100)return'Vencida';
+      if(d>=0&&d<=15)return'Por vencer';
+    }
+  }
+  return'En proceso';
+}
+
+function badge(est){
+  if(est==='Completada')return['bok','Completada'];
+  if(est==='Vencida')return['bcrit','Vencida'];
+  if(est==='Por vencer')return['bwarn','Por vencer'];
+  return['binfo','En proceso'];
+}
+
+// ── FILTROS ───────────────────────────────────────────────────────────────────
+function buildFilters(){
+  // Responsables — incluir de HOJAS y también de COMPONENTES
+  const respSet=new Set();
+  // De hojas
+  HOJAS.forEach(r=>{if(r.resp)respSet.add(r.resp);});
+  // De componentes — buscar en ROW_MAP
+  COMPONENTES.forEach(c=>{
+    const row=ROW_MAP[c.id];
+    if(row){
+      const resp=cv(row,'Responsable');
+      if(resp)respSet.add(resp);
+    }
+  });
+  const resps=[...respSet].sort();
+  const rs=el('f-resp');
+  rs.innerHTML='<option value="todos">Todos</option>';
+  resps.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;rs.appendChild(o);});
+
+  // Componentes
+  const cs=el('f-comp');
+  cs.innerHTML='<option value="todos">Todos</option>';
+  COMPONENTES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nombre;cs.appendChild(o);});
+}
+
+function getF(){
+  return{
+    fr:el('f-frente').value,
+    cp:el('f-comp').value,
+    rp:el('f-resp').value,
+    es:el('f-estado').value
+  };
+}
+
+function filterHojas(hojas,{fr,cp,rp,es}){
+  let f=hojas;
+  if(fr!=='todos')f=f.filter(r=>r.fk===fr);
+  if(cp!=='todos')f=f.filter(r=>r.componenteId===Number(cp)||r.componenteId===cp);
+  if(rp!=='todos')f=f.filter(r=>r.resp===rp);
+  if(es!=='todos')f=f.filter(r=>r.est===es);
+  return f;
+}
+
+function onFilter(){
+  if(!HOJAS.length)return;
+  const hojas=HOJAS.map(r=>({...r,est:calcEst(r)}));
+  const{fr,cp,rp,es}=getF();
+  const filtered=filterHojas(hojas,{fr,cp,rp,es});
+  renderDash(hojas,filtered,fr);
+  renderCron(hojas);
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────────
+function renderAll(){
+  const hojas=HOJAS.map(r=>({...r,est:calcEst(r)}));
+  renderDash(hojas,hojas,'todos');
+  renderCron(hojas);
+}
+
+function renderDash(allHojas,filtradas,frFilter){
+  // KPIs sobre hojas filtradas
+  const comp =filtradas.filter(r=>r.est==='Completada').length;
+  const venc =filtradas.filter(r=>r.est==='Vencida').length;
+  const prox =filtradas.filter(r=>r.est==='Por vencer').length;
+  const total=filtradas.length;
+
+  // % global = % DE LA RAÍZ (PLAN DE TRABAJO) directamente de Smartsheet
+  // Si hay filtro por frente, usar % de ese frente
+  let pctGlobal=0;
+  if(frFilter!=='todos'&&FRENTES[frFilter]){
+    pctGlobal=FRENTES[frFilter].pct;
+  } else {
+    // Usar el % global de la raíz que se trajo en parse()
+    pctGlobal=ROOT_PCT;
+  }
+
+  el('kv-global').textContent=pctGlobal+'%';
+  el('kv-venc').textContent=venc;
+  el('kv-prox').textContent=prox;
+  el('kv-comp').textContent=comp;
+  el('lbl-comp').textContent=total>0?Math.round(comp/total*100)+'% del plan':'—';
+
+  const kc=el('kpi-card');
+  kc.className='card card-kpi '+(pctGlobal>=95?'ok':pctGlobal>=80?'warn':'crit');
+  el('sem-g').className='sem '+(pctGlobal>=95?'ok':pctGlobal>=80?'warn':'crit');
+  el('lbl-g').textContent=pctGlobal>=95?'Óptimo':pctGlobal>=80?'En seguimiento':'Crítico';
+  drawGauge(pctGlobal);setTimeline(pctGlobal);
+
+  // Frentes — % EXACTO de Smartsheet (fila padre del frente)
+  ['f1','f2','f3'].forEach(fk=>{
+    const fr=FRENTES[fk];
+    const fp=fr?fr.pct:0;
+    const fHojas=allHojas.filter(r=>r.fk===fk);
+    const fv=fHojas.filter(r=>r.est==='Vencida').length;
+    const clr=fp>=95?'var(--gr)':fp>=80?'var(--am)':'var(--rd)';
+    const off=frFilter!=='todos'&&frFilter!==fk;
+    el(fk+'-pct').textContent=fp+'%';el(fk+'-pct').style.color=clr;
+    el(fk+'-bar').style.width=fp+'%';el(fk+'-bar').style.background=clr;
+    el(fk+'-sub').textContent=`${fHojas.length} activ. · ${fv} vencidas`;
+    const b=el(fk+'-badge');
+    b.textContent=fp>=95?'Óptimo':fp>=80?'Seguimiento':'Crítico';
+    b.className='badge '+(fp>=95?'bok':fp>=80?'bwarn':'bcrit');
+    const card=el('card-'+fk);
+    card.style.opacity=off?'.35':'1';card.style.transform=off?'scale(0.97)':'scale(1)';card.style.transition='all .25s';
+  });
+
+  // Distribución (sobre hojas filtradas)
+  const estats=['Completada','En proceso','Por vencer','Vencida'];
+  const clrs=['var(--gr)','var(--b3)','var(--am)','var(--rd)'];
+  el('dist-box').innerHTML=estats.map((e,i)=>{
+    const cnt=filtradas.filter(r=>r.est===e).length;
+    return`<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:10px">
+      <span style="flex:1;color:var(--tx2)">${e}</span>
+      <div class="pbar" style="max-width:60px"><div class="pbar-f" style="width:${total>0?Math.round(cnt/total*100):0}%;background:${clrs[i]}"></div></div>
+      <span style="font-size:10px;font-weight:500;color:${clrs[i]};min-width:20px;text-align:right">${cnt}</span>
+    </div>`;
+  }).join('');
+
+  // Alertas ejecutivas (siempre sobre todas las hojas)
+  const als=[];
+  if(venc>0)als.push({t:`${venc} actividad${venc>1?'es':''} vencida${venc>1?'s':''}`,cl:'crit'});
+  if(prox>0)als.push({t:`${prox} por vencer en ≤15 días`,cl:'warn'});
+  ['f1','f2','f3'].forEach(fk=>{
+    const fv=allHojas.filter(r=>r.fk===fk&&r.est==='Vencida').length;
+    if(fv>0)als.push({t:`${FI_NAME[fk]}: ${fv} vencida${fv>1?'s':''}`,cl:'warn'});
+  });
+  if(!als.length)als.push({t:'Sin alertas críticas activas ✓',cl:'ok'});
+  el('alerts-box').innerHTML=als.map(a=>`
+    <div style="display:flex;align-items:flex-start;gap:5px;padding:3px 0;font-size:10px;border-bottom:.5px solid var(--bd)">
+      <span class="sem ${a.cl}" style="margin-top:3px;flex-shrink:0"></span><span>${a.t}</span>
+    </div>`).join('');
+
+  // Componentes — CONSOLIDADOS POR NOMBRE, mostrando % por frente
+  const compsByName={};
+  COMPONENTES.forEach(c=>{
+    const key=c.nombre; // Agrupar por nombre
+    if(!compsByName[key])compsByName[key]=[];
+    compsByName[key].push(c);
+  });
+
+  const compsToShow=frFilter!=='todos'
+    ?Object.entries(compsByName).map(([nombre,comps])=>({nombre,comps:comps.filter(c=>c.fk===frFilter)})).filter(c=>c.comps.length>0)
+    :Object.entries(compsByName).map(([nombre,comps])=>({nombre,comps}));
+
+  el('comp-lbl').textContent=frFilter!=='todos'?`— ${FI_NAME[frFilter]}`:'';
+  el('comps-box').innerHTML=compsToShow.length===0
+    ?'<div class="empty-state">Sin componentes</div>'
+    :compsToShow.map(({nombre,comps})=>{
+      return`<div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:500;color:var(--tx2);margin-bottom:4px">${nombre}</div>
+        ${comps.map(c=>{
+          const p=c.pct;
+          const clr=p>=95?'var(--gr)':p>=80?'var(--am)':'var(--rd)';
+          const fk=c.fk||'f1';
+          return`<div class="comp-row" style="margin-left:8px;border-left:2px solid var(--bd);padding-left:6px">
+            <span class="ficon ${FI_CLS[fk]}" style="width:15px;height:15px;font-size:8px"><i class="fa-solid ${FI_ICON[fk]}"></i></span>
+            <span style="flex:1;font-size:9px;color:var(--tx3)">${FI_NAME[fk]}</span>
+            <div class="pbar" style="max-width:40px"><div class="pbar-f" style="width:${p}%;background:${clr}"></div></div>
+            <span style="font-size:9px;font-weight:500;min-width:25px;text-align:right;color:${clr}">${p}%</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+
+  // Responsables — % de la fila componente que le corresponde, agrupado por resp
+  // Usamos promedio del % de hojas para responsables (no hay fila padre por responsable)
+  const rm={};
+  allHojas.forEach(r=>{
+    const k=r.resp||'Sin asignar';
+    if(!rm[k])rm[k]={sum:0,n:0,fk:r.fk};
+    rm[k].sum+=r.pct;rm[k].n++;
+  });
+  el('resps-box').innerHTML=Object.entries(rm).sort((a,b)=>b[1].n-a[1].n).slice(0,8).map(([nm,v])=>{
+    const p=Math.round(v.sum/v.n);
+    const clr=p>=95?'var(--gr)':p>=80?'var(--am)':'var(--rd)';
+    const ini=nm.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    const fk=v.fk||'f1';
+    return`<div class="frow">
+      <div class="ava">${ini}</div>
+      <span style="flex:1;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nm}</span>
+      <span class="ficon ${FI_CLS[fk]}" style="width:16px;height:16px;font-size:9px"><i class="fa-solid ${FI_ICON[fk]}"></i></span>
+      <div style="width:40px;height:4px;border-radius:2px;background:var(--bds);overflow:hidden">
+        <div style="height:100%;border-radius:2px;background:${clr};width:${p}%"></div>
+      </div>
+      <span style="font-size:10px;font-weight:500;min-width:26px;text-align:right;color:${clr}">${p}%</span>
+    </div>`;
+  }).join('');
+
+  // Actividades urgentes — vencidas + planeadas de mes actual/próximo
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const mesActual=hoy.getMonth(), añoActual=hoy.getFullYear();
+  const mesPróximo=(mesActual+1)%12, añoPróximo=mesActual===11?añoActual+1:añoActual;
+
+  const urgentes=filtradas.filter(r=>{
+    // Siempre incluir vencidas
+    if(r.est==='Vencida')return true;
+    // Incluir planeadas del mes actual/próximo
+    if(r.fin){
+      const fin=new Date(r.fin);
+      const mesFin=fin.getMonth(), añoFin=fin.getFullYear();
+      if((mesFin===mesActual&&añoFin===añoActual)||(mesFin===mesPróximo&&añoFin===añoPróximo)){
+        return true;
+      }
+    }
+    return false;
+  }).sort((a,b)=>{
+    if(a.est!==b.est)return a.est==='Vencida'?-1:1;
+    return new Date(a.fin)-new Date(b.fin);
+  });
+
+  el('acts-box').innerHTML=urgentes.length===0
+    ?'<div class="empty-state">Sin actividades vencidas o por vencer 🎉</div>'
+    :urgentes.slice(0,15).map(r=>{
+      const[bc,bt]=badge(r.est);
+      const rc=r.est==='Vencida'?'venc':'prox';
+      const fmtF=r.fin?new Date(r.fin).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}):'—';
+      const subnivel=r.procesoNombre||r.nombre||'—';
+      return`<div class="arow ${rc}">
+        <span style="font-size:10px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.componenteNombre||'—'}</span>
+        <span style="font-size:9px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${subnivel}</span>
+        <span style="font-size:10px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.resp||'—'}</span>
+        <span style="font-size:10px;color:var(--tx3)">${fmtF}</span>
+      </div>`;
+    }).join('');
+
+  // Top prioridades
+  el('prios-box').innerHTML=urgentes.length===0
+    ?'<div class="empty-state">Sin prioridades urgentes 🎉</div>'
+    :urgentes.slice(0,5).map((r,i)=>{
+      const clr=r.est==='Vencida'?'var(--rd)':'var(--am)';
+      const fmtF=r.fin?new Date(r.fin).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}):'—';
+      return`<div style="display:flex;align-items:flex-start;gap:5px;padding:5px 0;border-bottom:.5px solid var(--bd);font-size:10px">
+        <span style="width:15px;height:15px;border-radius:50%;background:${clr};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;flex-shrink:0;margin-top:1px">${i+1}</span>
+        <span class="ficon ${FI_CLS[r.fk]}" style="width:15px;height:15px;font-size:9px;flex-shrink:0;margin-top:1px"><i class="fa-solid ${FI_ICON[r.fk]}"></i></span>
+        <div style="flex:1;line-height:1.4">
+          ${r.componenteNombre?`<div style="font-size:9px;color:var(--tx3)">${r.componenteNombre}</div>`:''}
+          <div>${r.nombre}</div>
+        </div>
+        <span style="color:var(--tx3);white-space:nowrap;font-size:9px">${fmtF}</span>
+      </div>`;
+    }).join('');
+}
+
+// ── CRONOGRAMA ────────────────────────────────────────────────────────────────
+function renderCron(cachedHojas){
+  const hojas=cachedHojas||(HOJAS.map(r=>({...r,est:calcEst(r)})));
+  const{fr,cp,rp,es}=getF();
+  const f=filterHojas(hojas,{fr,cp,rp,es});
+
+  el('cron-body').innerHTML=f.length===0
+    ?'<div class="empty-state">Sin resultados para los filtros seleccionados</div>'
+    :f.sort((a,b)=>new Date(a.ini)-new Date(b.ini)).slice(0,80).map(r=>{
+      const[bc,bt]=badge(r.est);
+      const rc=r.est==='Vencida'?'venc':r.est==='Por vencer'?'prox':r.est==='Completada'?'done':'';
+      const fmtI=r.ini?new Date(r.ini).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'2-digit'}):'—';
+      const fmtF=r.fin?new Date(r.fin).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'2-digit'}):'—';
+      return`<div class="crow ${rc}">
+        <div style="font-size:10px;line-height:1.4">
+          ${r.componenteNombre?`<div style="font-size:9px;color:var(--tx3)">${r.componenteNombre}</div>`:''}
+          <div>${r.nombre}</div>
+        </div>
+        <span style="font-size:10px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.procesoNombre||'—'}</span>
+        <span style="font-size:10px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.resp||'—'}</span>
+        <span style="font-size:10px;color:var(--tx3);white-space:nowrap">${fmtI}</span>
+        <span style="font-size:10px;color:var(--tx3);white-space:nowrap">${fmtF}</span>
+        <span class="badge ${bc}">${bt}</span>
+      </div>`;
+    }).join('');
+}
+
+function el(id){return document.getElementById(id);}
+function switchView(v,btn){
+  document.querySelectorAll('.tab-view').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  el('view-'+v).classList.add('active');btn.classList.add('active');
+  if(v==='cron'){const h=HOJAS.map(r=>({...r,est:calcEst(r)}));renderCron(h);}
+}
+// ── EXPORT EXCEL ──────────────────────────────────────────────────────────────
+function exportVencidosExcel(){
+  const hojas=HOJAS.map(r=>({...r,est:calcEst(r)}));
+  const vencidas=hojas.filter(r=>r.est==='Vencida');
+
+  if(vencidas.length===0){
+    alert('No hay actividades vencidas para descargar.');return;
+  }
+
+  const data=vencidas.map(r=>{
+    const fmtI=r.ini?new Date(r.ini).toLocaleDateString('es-CO'):'—';
+    const fmtF=r.fin?new Date(r.fin).toLocaleDateString('es-CO'):'—';
+    return{
+      'Frente':r.fk==='f1'?'Industria & Logística':r.fk==='f2'?'CMO & Producto':'Nonbank & Corporativo',
+      'Componente':r.componenteNombre||'—',
+      'Actividad':r.nombre,
+      'Responsable':r.resp||'—',
+      'Proceso':r.procesoNombre||'—',
+      'Fecha Inicio':fmtI,
+      'Fecha Fin':fmtF,
+      'Avance %':r.pct,
+      'Estado':r.est
+    };
+  });
+
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Actividades Vencidas');
+
+  // Ajustar ancho de columnas
+  ws['!cols']=[{wch:20},{wch:25},{wch:35},{wch:20},{wch:20},{wch:15},{wch:15},{wch:10},{wch:15}];
+
+  XLSX.writeFile(wb,`Actividades_Vencidas_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// Carga inicial automática
+drawGauge(0);
+load();
+</script>
+</body>
+</html>

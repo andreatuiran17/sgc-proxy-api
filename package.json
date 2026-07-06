@@ -1,0 +1,12 @@
+{
+  "name": "sgc-proxy-api",
+  "version": "2.0.0",
+  "description": "SGC Smartsheet Synchronization API with Redis Caching",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "keywords": ["smartsheet", "sgc", "sync", "vercel", "kv-redis"],
+  "author": "Andrea Tuiran",
+  "license": "MIT"
+}
