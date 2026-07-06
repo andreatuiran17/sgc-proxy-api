@@ -8,5 +8,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: curl -s -H "Authorization: Bearer 4X3rzdLllABWmmhrKYzsBmrLTUrciOzsgtYfN" "https://api.smartsheet.com/2.0/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1" > data.json
+      - run: curl -s -H "Authorization: Bearer ${{ secrets.SMARTSHEET_TOKEN }}" "https://api.smartsheet.com/2.0/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1" > data.json
       - run: git config user.email "a@a.com" && git config user.name "bot" && git add data.json && git commit -m "sync" || true && git push
