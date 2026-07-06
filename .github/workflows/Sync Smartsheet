@@ -1,24 +1,12 @@
-name: Sync Smartsheet
-
+name: Smartsheet Sync
 on:
   schedule:
     - cron: '0 * * * *'
-  workflow_dispatch:
-
+  workflow_dispatch: {}
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Sync Smartsheet
-        run: |
-          curl -s -H "Authorization: Bearer 4X3rzdLllABWmmhrKYzsBmrLTUrciOzsgtYfN" \
-            "https://api.smartsheet.com/2.0/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1" \
-            > data.json
-      - name: Commit
-        run: |
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-          git add data.json
-          git commit -m "sync data" || true
-          git push
+      - run: curl -s -H "Authorization: Bearer 4X3rzdLllABWmmhrKYzsBmrLTUrciOzsgtYfN" "https://api.smartsheet.com/2.0/sheets/24vqjfH8hV78hQJhhpQqh6j4QWHxQq76cpx78hP1" > data.json
+      - run: git config user.email "a@a.com" && git config user.name "bot" && git add data.json && git commit -m "sync" || true && git push
